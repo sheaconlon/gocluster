@@ -45,8 +45,8 @@ func serveN(port string, endpoint string, serve func(w http.ResponseWriter, r *h
 }
 
 // ReceiveFiles receives files over HTTP. It listens for HTTP requests to the given port and endpoint, with form
-// uploads containing a field with formFieldName. It saves the files uploaded to path, concatenated with an
-// integer index. It receives n files.
+// uploads containing a field with formFieldName. It saves the files uploaded to the directory at path, with
+// filenames that are successive integers. It receives n files.
 func ReceiveFiles(port string, endpoint string, formFieldName string, path string, n int) {
 	var fileNumbers = make(chan int, n)
 	for i := 0; i < n; i++ {
@@ -59,8 +59,7 @@ func ReceiveFiles(port string, endpoint string, formFieldName string, path strin
 		Check(err)
 		defer uploadedFile.Close()
 
-		iString := strconv.Itoa(<- fileNumbers)
-		file, err := os.OpenFile(path + iString, os.O_WRONLY|os.O_CREATE, 0666)
+		file, err := os.OpenFile(path + "/" + strconv.Itoa(<- fileNumbers), os.O_WRONLY|os.O_CREATE, 0666)
 		Check(err)
 		defer file.Close()
 
