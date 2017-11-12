@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+// Check an error. Print it and exit if not nil.
 func Check(err error) {
 	if err != nil {
 		fmt.Println(err)
