@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"mime/multipart"
 	"strconv"
+	"strings"
 )
 
 // serveNPollInterval is the interval at which serveN checks whether it should shut down the server.
@@ -46,13 +47,16 @@ func serveN(port string, endpoint string, serve func(w http.ResponseWriter, r *h
 
 // ReceiveFiles receives files over HTTP. It listens for HTTP requests to the given port and endpoint, with form
 // uploads containing a field with formFieldName. It saves the files uploaded to the directory at path, with
-// filenames that are successive integers. It receives n files.
-func ReceiveFiles(port string, endpoint string, formFieldName string, path string, n int) {
+// filenames that are successive integers. It receives n files. It returns the IP and port of the sender of the
+// last file.
+func ReceiveFiles(port string, endpoint string, formFieldName string, path string, n int) (senderAddress string) {
 	var fileNumbers = make(chan int, n)
 	for i := 0; i < n; i++ {
 		fileNumbers <- i
 	}
 	handler := func(w http.ResponseWriter, r *http.Request) {
+		senderAddress = strings.Split(r.RemoteAddr, ":")[0]
+
 		// Adapted from https://astaxie.gitbooks.io/build-web-application-with-golang/en/04.5.html.
 		r.ParseMultipartForm(receiveFilesMaxMemory)
 		uploadedFile, _, err := r.FormFile(formFieldName)
@@ -67,6 +71,7 @@ func ReceiveFiles(port string, endpoint string, formFieldName string, path strin
 		return
 	}
 	serveN(port, endpoint, handler, n)
+	return
 }
 
 // SendFile sends a file over HTTP. It sends an HTTP request to the given address, port, and endpoint, with a
